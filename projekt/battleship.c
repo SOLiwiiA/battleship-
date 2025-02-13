@@ -87,7 +87,7 @@ void deployPlayerShips(Game* game) {
         } else if (game->grid[x][y] == game->player.symbol) {
             printf("Nie mozesz umiescic dwoch statkow w tym samym miejscu.\n");
         } else {
-            printf("Nie mozesz wprowadzic statkow poza gridem.\n");
+            printf("Nie mozesz wprowadzic statkow poza mape.\n");
         }
     }
     printOceanMap(game);
@@ -142,7 +142,7 @@ void playerTurn(Game* game) {
                 break;
             }
         } else {
-            printf("Nie mozesz wprowadzic wspolrzednych poza gridem.\n");
+            printf("Nie mozesz wprowadzic wspolrzednych poza mape.\n");
         }
     } while (1);
 }
