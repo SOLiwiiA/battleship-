@@ -6,25 +6,25 @@
 #define TOTAL_SHIPS 5
 #define MAX_TURNS 100
 
-// Struktura reprezentująca gracza
+// Struktura reprezentujaca gracza
 typedef struct {
     char symbol;            // Symbol gracza (gracz: '@', komputer: 'x')
-    int ships;              // Liczba statków
-    int shipsSunk;          // Liczba zatopionych statków
+    int ships;              // Liczba statkow
+    int shipsSunk;          // Liczba zatopionych statkow
     int score;              // Punkty gracza
 } Player;
 
-// Struktura reprezentująca grę
+// Struktura reprezentujaca gre
 typedef struct {
     char grid[NUM_ROWS][NUM_COLS];  // Plansza
-    char attackHistory[NUM_ROWS][NUM_COLS]; // Historia ataków
+    char attackHistory[NUM_ROWS][NUM_COLS]; // Historia atakow
     Player player;                   // Gracz
     Player computer;                 // Komputer
     int turnCounter;                 // Licznik tur
-    int difficulty;                  // Poziom trudności (1 - łatwy, 2 - średni, 3 - trudny)
+    int difficulty;                  // Poziom trudnosci (1 - latwy, 2 - sredni, 3 - trudny)
 } Game;
 
-// Deklaracje funkcji z battleship.c
+// Funkcje do obsługi gry
 void createOceanMap(Game* game);
 void printOceanMap(Game* game);
 void deployPlayerShips(Game* game);

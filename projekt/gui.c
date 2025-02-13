@@ -1,72 +1,111 @@
-#include <gtk/gtk.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "game.h"
 
-Game game;
-GtkWidget *grid_buttons[NUM_ROWS][NUM_COLS];
-
-// Funkcja do aktualizacji planszy w GUI
-void update_gui() {
-    for (int i = 0; i < NUM_ROWS; i++) {
-        for (int j = 0; j < NUM_COLS; j++) {
-            char text[2] = {game.grid[i][j], '\0'};
-            gtk_button_set_label(GTK_BUTTON(grid_buttons[i][j]), text);
-        }
+// Funkcja do drukowania planszy
+void printOceanMap(Game* game) {
+    printf("\n           Plansza Gracza           |           Plansza Komputera\n");
+    printf("  ");
+    for (int i = 0; i < NUM_COLS; i++) {
+        printf("%d", i);
     }
+    printf("    |    ");
+    for (int i = 0; i < NUM_COLS; i++) {
+        printf("%d", i);
+    }
+    printf("\n");
+
+    for (int i = 0; i < NUM_ROWS; i++) {
+        printf("%d|", i);
+        for (int j = 0; j < NUM_COLS; j++) {
+            printf("%c", game->grid[i][j]);
+        }
+        printf("|%d|", i);
+        for (int j = 0; j < NUM_COLS; j++) {
+            printf("%c", game->attackHistory[i][j]);
+        }
+        printf("\n");
+    }
+
+    printf("  ");
+    for (int i = 0; i < NUM_COLS; i++) {
+        printf("%d", i);
+    }
+    printf("    |    ");
+    for (int i = 0; i < NUM_COLS; i++) {
+        printf("%d", i);
+    }
+    printf("\n");
 }
 
-// Funkcja obsługująca kliknięcie na przycisk planszy
-void on_grid_button_clicked(GtkWidget *button, gpointer data) {
-    int *coords = (int *)data;
-    int x = coords[0];
-    int y = coords[1];
+// Funkcja do wyboru poziomu trudnosci
+void chooseDifficulty(Game* game) {
+    int choice;
+    printf("\nWybierz poziom trudnosci:\n");
+    printf("1. Latwy\n");
+    printf("2. Sredni\n");
+    printf("3. Trudny\n");
+    scanf("%d", &choice);
 
-    if (game.grid[x][y] == game.computer.symbol) {
-        game.grid[x][y] = '!';
-        game.computer.ships--;
-        game.computer.shipsSunk++;
-        game.player.score += 10;
+    if (choice == 1) {
+        game->difficulty = 1;
+    } else if (choice == 2) {
+        game->difficulty = 2;
+    } else if (choice == 3) {
+        game->difficulty = 3;
     } else {
-        game.grid[x][y] = '-';
-        game.attackHistory[x][y] = 'M';
+        printf("Niepoprawny wybor, ustawiam trudnosc na latwa.\n");
+        game->difficulty = 1;
     }
-
-    update_gui();
 }
 
-// Funkcja do rozpoczęcia nowej gry w GUI
-void on_new_game(GtkWidget *widget, gpointer data) {
-    startNewGame(&game);
-    update_gui();
+// Funkcja do rozpoczęcia gry
+void startGame() {
+    Game game = {{{' '}}, {{' '}}, {'@', TOTAL_SHIPS, 0, 0}, {'x', TOTAL_SHIPS, 0, 0}, 0};
+
+    char choice;
+
+    printf("**** Witamy w grze w statki ****\n");
+    printf("1. Nowa gra\n");
+    printf("2. Zakonczenie\n");
+    printf("Wybierz opcje: ");
+    scanf(" %c", &choice);
+
+    if (choice == '1') {
+        chooseDifficulty(&game);
+        startNewGame(&game);
+    } else if (choice == '2') {
+        printf("Dziekujemy za gre! Zakonczono gre.\n");
+    } else {
+        printf("Niepoprawny wybór. Zakonczono gre.\n");
+    }
 }
 
-// Inicjalizacja GUI
-void start_gui(int argc, char *argv[]) {
-    gtk_init(&argc, &argv);
+// Funkcja do rozpoczęcia nowej gry (wywołanie funkcji z game.h)
+void startNewGame(Game* game) {
+    game->player.ships = TOTAL_SHIPS;
+    game->computer.ships = TOTAL_SHIPS;
+    game->player.shipsSunk = 0;
+    game->computer.shipsSunk = 0;
+    game->player.score = 0;
+    game->computer.score = 0;
+    game->turnCounter = 0;
+    createOceanMap(game);
+    deployPlayerShips(game);
+    deployComputerShips(game);
+    printf("\nNowa gra rozpoczęta!\n");
 
-    GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window), "Statki - Gra");
-    gtk_window_set_default_size(GTK_WINDOW(window), 600, 600);
-    g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
-
-    GtkWidget *grid = gtk_grid_new();
-    gtk_container_add(GTK_CONTAINER(window), grid);
-
-    for (int i = 0; i < NUM_ROWS; i++) {
-        for (int j = 0; j < NUM_COLS; j++) {
-            int *coords = malloc(2 * sizeof(int));
-            coords[0] = i;
-            coords[1] = j;
-
-            grid_buttons[i][j] = gtk_button_new_with_label(" ");
-            g_signal_connect(grid_buttons[i][j], "clicked", G_CALLBACK(on_grid_button_clicked), coords);
-            gtk_grid_attach(GTK_GRID(grid), grid_buttons[i][j], j, i, 1, 1);
-        }
+    while (!checkGameOver(game) && game->turnCounter < MAX_TURNS) {
+        printOceanMap(game);
+        playerTurn(game);
+        if (checkGameOver(game)) break;
+        intelligentComputerTurn(game);
+        game->turnCounter++;
     }
+    gameOver(game);
+}
 
-    GtkWidget *button = gtk_button_new_with_label("Nowa Gra");
-    g_signal_connect(button, "clicked", G_CALLBACK(on_new_game), NULL);
-    gtk_grid_attach(GTK_GRID(grid), button, 0, NUM_ROWS, NUM_COLS, 1);
-
-    gtk_widget_show_all(window);
-    gtk_main();
+int main() {
+    startGame();
+    return 0;
 }
